@@ -5,5 +5,8 @@ services:
     image: kaczmar2/tftp-hpa
     restart: unless-stopped
     network_mode: host
+    environment:
+      - TZ=${TZ:-UTC}  # Use .env file or default to UTC
     volumes:
-      - /srv/docker/tftp:/srv/tftp
+      - ${TFTP_ROOT:-/srv/docker/tftp}:/srv/tftp
+      - /etc/localtime:/etc/localtime:ro
