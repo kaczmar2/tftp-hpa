@@ -2,9 +2,9 @@
 FROM debian:bookworm-slim
 
 # Set metadata
-LABEL maintainer="Christian Kaczmarek"
-LABEL description="TFTP Server using tftp-hpa"
-LABEL version="1.0"
+LABEL maintainer="kaczmar2"
+LABEL description="Minimal TFTP server based on Debian Bookworm Slim and tftpd-hpa"
+LABEL version="1.0.0"
 
 # Install tftpd-hpa package and socat for simple syslog redirection
 RUN apt-get update && \
