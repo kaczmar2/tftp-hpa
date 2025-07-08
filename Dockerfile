@@ -26,9 +26,10 @@ WORKDIR /srv/tftp
 
 # Create startup script with socat for syslog redirection
 RUN echo '#!/bin/bash' > /start-tftp.sh && \
-    echo 'echo "Starting HPA's tftpd..."' >> /start-tftp.sh && \
+    echo 'echo "Starting tftpd..."' >> /start-tftp.sh && \
     echo 'socat -u UNIX-RECV:/dev/log STDOUT &' >> /start-tftp.sh && \
     echo 'sleep 1' >> /start-tftp.sh && \
+    echo 'echo "Executing: /usr/sbin/in.tftpd --foreground --secure --verbosity 4 --user tftp /srv/tftp"' >> /start-tftp.sh && \
     echo 'exec /usr/sbin/in.tftpd --foreground --secure --verbosity 4 --user tftp /srv/tftp' >> /start-tftp.sh && \
     chmod +x /start-tftp.sh
 
