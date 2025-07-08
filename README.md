@@ -1,14 +1,6 @@
 # TFTP Server Docker Image
 
-A minimal, secure TFTP server based on Debian Bookworm and `tftpd-hpa`.
-
-## Features
-
-- **Minimal footprint** - Based on `debian:bookworm-slim`
-- **Security focused** - Runs with `--secure` chroot protection
-- **Production ready** - Follows Debian best practices
-- **Verbose logging** - Configurable logging levels
-- **Host networking** - Avoids TFTP port mapping issues
+A minimal, secure TFTP server based on `debian:bookworm-slim` and `tftpd-hpa`.
 
 ## Quick Start
 
@@ -18,8 +10,15 @@ A minimal, secure TFTP server based on Debian Bookworm and `tftpd-hpa`.
 # Clone or create the project directory
 mkdir tftp-server && cd tftp-server
 
-# Create docker-compose.yml and Dockerfile
-# Build and start
+# Download docker-compose.yml
+curl -O https://raw.githubusercontent.com/kaczmar2/tftp-hpa/main/docker-compose.yml
+
+# Create .env file for configuration (optional)
+curl -O https://raw.githubusercontent.com/kaczmar2/tftp-hpa/main/.env.example
+cp .env.example .env
+# Edit .env to set TZ and TFTP_ROOT if needed
+
+# Pull and start
 docker-compose up -d
 
 # Check status
@@ -30,15 +29,13 @@ docker logs tftp-server
 ### Using Docker Run
 
 ```bash
-# Build the image
-docker build -t kaczmar2/tftp-hpa .
-
-# Run with host networking
 docker run -d \
   --name tftp-server \
   --network host \
   --restart unless-stopped \
-  -v /srv/tftp:/srv/tftp \
+  -e TZ=America/New_York \
+  -v /srv/docker/tftp:/srv/tftp \
+  -v /etc/localtime:/etc/localtime:ro \
   kaczmar2/tftp-hpa
 ```
 
@@ -46,70 +43,24 @@ docker run -d \
 
 ### Docker Compose Setup
 
-The `docker-compose.yml` file:
-
 ```yaml
 services:
   tftp:
-    build: .
     container_name: tftp-server
     image: kaczmar2/tftp-hpa
     restart: unless-stopped
     network_mode: host
+    environment:
+      - TZ=${TZ:-UTC}  # Use .env file or default to UTC
     volumes:
-      - /srv/docker/tftp:/srv/tftp
+      - ${TFTP_ROOT:-/srv/docker/tftp}:/srv/tftp
+      - /etc/localtime:/etc/localtime:ro
 ```
-
-**Key configuration choices:**
-
-- **`build: .`** - Builds from local Dockerfile during development
-- **`image: kaczmar2/tftp-hpa`** - Tags the built image for Docker Hub
-- **`network_mode: host`** - Required for TFTP (avoids ephemeral port issues)
-- **Volume mount** - Maps host directory to container's `/srv/tftp`
-
-### Dockerfile Structure
-
-The Dockerfile follows these principles:
-
-```dockerfile
-# Minimal base image
-FROM debian:bookworm-slim
-
-# Package installation only
-RUN apt-get update && \
-    apt-get install -y --no-install-recommends tftpd-hpa && \
-    apt-get clean && \
-    rm -rf /var/lib/apt/lists/*
-
-# Working directory
-WORKDIR /srv/tftp
-
-# Daemon command
-CMD ["/usr/sbin/in.tftpd", "--listen", "--user", "tftp", "--address", "0.0.0.0:69", "--secure", "--verbosity", "4", "/srv/tftp"]
-```
-
-**Design decisions:**
-
-- **`debian:bookworm-slim`** - Minimal base (~27MB) with full package compatibility
-- **`--no-install-recommends`** - Installs only essential dependencies
-- **`apt-get clean`** - Removes package cache to reduce image size
-- **`WORKDIR /srv/tftp`** - Sets working directory for debugging convenience
-
-### TFTP Daemon Configuration
-
-The CMD uses these flags:
-
-- **`--listen`** - Foreground mode for Docker containers
-- **`--user tftp`** - Drops privileges after binding to port 69
-- **`--address 0.0.0.0:69`** - Listens on all interfaces, port 69
-- **`--secure`** - Enables chroot jail for security
-- **`--verbosity 4`** - Verbose logging for debugging
-- **`/srv/tftp`** - TFTP root directory
 
 ## Directory Structure
 
 ```
-/srv/docker/tftp/          # Host directory (mapped to container)
+/srv/docker/tftp/         # Host directory (mapped to container)
 ├── file1.txt             # Files to serve via TFTP
 ├── file2.bin             # Any files you want accessible
 └── subdirectory/         # Subdirectories are supported
@@ -128,25 +79,30 @@ sudo apt install tftp-hpa
 tftp localhost
 tftp> get file1.txt
 tftp> quit
-
-# Or one-liner
-echo "get file1.txt" | tftp localhost
 ```
 
 ### Viewing Logs
 
 ```bash
-# Real-time logs
+# Real-time logs (includes TFTP requests and responses)
 docker logs -f tftp-server
 
 # Check for TFTP requests (RRQ = Read Request)
 docker logs tftp-server | grep RRQ
+
+# Check for file not found errors (NAK = Negative Acknowledgment)
+docker logs tftp-server | grep NAK
 ```
+
+**Log format:**
+- `<29>` - RRQ (Read Request) messages
+- `<30>` - NAK (Error) messages like "File not found"
+- Timestamps use container timezone (configurable via TZ environment variable)
 
 ### File Management
 
 ```bash
-# Add files to serve
+# Add files to serve (use actual host directory)
 cp myfile.txt /srv/docker/tftp/
 
 # Check what files are available
@@ -168,125 +124,4 @@ This container **requires** `network_mode: host` because:
 
 ### Firewall
 
-Ensure UDP port 69 is accessible:
-
-```bash
-# UFW example
-sudo ufw allow 69/udp
-
-# iptables example  
-sudo iptables -A INPUT -p udp --dport 69 -j ACCEPT
-```
-
-## Security
-
-### Built-in Security Features
-
-- **Chroot jail** - `--secure` restricts file access to `/srv/tftp` only
-- **Privilege dropping** - Daemon drops from root to `tftp` user after binding to port 69
-- **Read-only by default** - Only allows file downloads, not uploads
-- **Container isolation** - Process runs in isolated Docker environment
-
-### File Upload Support (Optional)
-
-By default, the server only allows downloads. To enable uploads, modify the CMD:
-
-```dockerfile
-CMD ["/usr/sbin/in.tftpd", "--listen", "--user", "tftp", "--address", "0.0.0.0:69", "--secure", "--create", "/srv/tftp"]
-```
-
-**Warning**: `--create` reduces security by allowing clients to create new files.
-
-## Troubleshooting
-
-### Container Issues
-
-**Container keeps restarting:**
-```bash
-# Check logs for errors
-docker logs tftp-server
-
-# Most common: port 69 already in use
-sudo netstat -ulnp | grep :69
-```
-
-**Build failures:**
-```bash
-# Clear Docker cache and rebuild
-docker-compose build --no-cache
-```
-
-### TFTP Issues
-
-**Connection timeouts:**
-```bash
-# Verify container is running
-docker ps
-
-# Check if daemon is listening on port 69
-docker exec tftp-server cat /proc/net/udp | grep :0045
-
-# Test locally first
-echo "get test.txt" | tftp localhost
-```
-
-**File not found errors:**
-```bash
-# Check files exist and have correct permissions
-ls -la /srv/docker/tftp/
-
-# Files should be readable (644 permissions)
-chmod 644 /srv/docker/tftp/*
-```
-
-### Permission Issues
-
-```bash
-# Check file ownership
-ls -la /srv/docker/tftp/
-
-# Fix permissions if needed
-chmod 755 /srv/docker/tftp/
-chmod 644 /srv/docker/tftp/*
-```
-
-## Building and Customization
-
-### Build Commands
-
-```bash
-# Build image
-docker build -t kaczmar2/tftp-hpa .
-
-# Build without cache
-docker build --no-cache -t kaczmar2/tftp-hpa .
-
-# Build with custom tag
-docker build -t kaczmar2/tftp-hpa:1.0 .
-```
-
-### Customizing the Daemon
-
-Modify the `CMD` in the Dockerfile to change behavior:
-
-```dockerfile
-# Example: Reduce verbosity
-CMD ["/usr/sbin/in.tftpd", "--listen", "--user", "tftp", "--address", "0.0.0.0:69", "--secure", "--verbosity", "1", "/srv/tftp"]
-
-# Example: IPv4 only
-CMD ["/usr/sbin/in.tftpd", "--listen", "-4", "--user", "tftp", "--address", "0.0.0.0:69", "--secure", "/srv/tftp"]
-
-# Example: Allow file uploads
-CMD ["/usr/sbin/in.tftpd", "--listen", "--user", "tftp", "--address", "0.0.0.0:69", "--secure", "--create", "/srv/tftp"]
-```
-
-## Performance
-
-- **Memory usage**: ~5-10MB per container
-- **CPU usage**: Minimal (event-driven)
-- **Image size**: ~80MB (Debian slim + tftpd-hpa)
-- **Startup time**: <1 second
-
-## License
-
-This project follows the same license terms as the underlying `tftpd-hpa` package.
+Ensure UDP port 69 is accessible.

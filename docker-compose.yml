@@ -1,6 +1,5 @@
 services:
   tftp:
-    build: .
     container_name: tftp-server
     image: kaczmar2/tftp-hpa
     restart: unless-stopped
