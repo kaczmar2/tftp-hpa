@@ -5,7 +5,7 @@ services:
     restart: unless-stopped
     network_mode: host
     environment:
-      - TZ=${TZ:-UTC}  # Use .env file or default to UTC
+      - TZ=${TZ:-UTC}
     volumes:
       - ${TFTP_ROOT:-/srv/docker/tftp}:/srv/tftp
       - /etc/localtime:/etc/localtime:ro
