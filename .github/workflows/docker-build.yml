@@ -23,12 +23,13 @@ jobs:
         context: .
         push: false
         tags: kaczmar2/tftp-hpa:test
+        load: true
         
     - name: Test image can start
       run: |
         # Create test directory
         mkdir -p /tmp/tftp-test
-        echo uname -a > /tmp/tftp-test/test.txt
+        echo "uname -a" > /tmp/tftp-test/test.txt
         
         # Start container
         docker run -d \
