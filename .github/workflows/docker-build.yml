@@ -29,7 +29,7 @@ jobs:
       run: |
         # Create test directory
         mkdir -p /tmp/tftp-test
-        echo "uname -a" > /tmp/tftp-test/test.txt
+        uname -a > /tmp/tftp-test/test
         
         # Start container
         docker run -d \
@@ -47,6 +47,42 @@ jobs:
         # Check logs for startup message
         docker logs tftp-test | grep "Starting tftpd"
         
-        # Cleanup
-        docker stop tftp-test
-        docker rm tftp-test
+    - name: Test TFTP functionality
+      run: |
+        # Install TFTP client
+        sudo apt-get update
+        sudo apt-get install -y tftp-hpa
+        
+        # Change to temp directory for test
+        cd /tmp
+        
+        # Test TFTP download
+        echo "get test" | tftp localhost
+        
+        # Verify file was downloaded and content matches
+        if [ -f test ]; then
+          echo "✅ File downloaded successfully"
+          if diff test /tmp/tftp-test/test; then
+            echo "✅ File content matches"
+          else
+            echo "❌ File content differs"
+            echo "Downloaded file:"
+            cat test
+            echo "Original file:"
+            cat /tmp/tftp-test/test
+            exit 1
+          fi
+        else
+          echo "❌ File was not downloaded"
+          exit 1
+        fi
+        
+        # Check TFTP logs for request
+        docker logs tftp-test | grep "RRQ from"
+        
+    - name: Cleanup
+      if: always()
+      run: |
+        docker stop tftp-test || true
+        docker rm tftp-test || true
+        rm -f /tmp/test
