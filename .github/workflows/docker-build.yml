@@ -1,0 +1,51 @@
+name: Docker Build and Test
+
+on:
+  push:
+    branches: [ main ]
+  pull_request:
+    branches: [ main ]
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v4
+      
+    - name: Set up Docker Buildx
+      uses: docker/setup-buildx-action@v3
+      
+    - name: Build Docker image
+      uses: docker/build-push-action@v5
+      with:
+        context: .
+        push: false
+        tags: kaczmar2/tftp-hpa:test
+        
+    - name: Test image can start
+      run: |
+        # Create test directory
+        mkdir -p /tmp/tftp-test
+        echo uname -a > /tmp/tftp-test/test.txt
+        
+        # Start container
+        docker run -d \
+          --name tftp-test \
+          --network host \
+          -v /tmp/tftp-test:/srv/tftp \
+          kaczmar2/tftp-hpa:test
+          
+        # Wait for startup
+        sleep 3
+        
+        # Check if container is running
+        docker ps | grep tftp-test
+        
+        # Check logs for startup message
+        docker logs tftp-test | grep "Starting tftpd"
+        
+        # Cleanup
+        docker stop tftp-test
+        docker rm tftp-test
