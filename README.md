@@ -1,5 +1,7 @@
 # TFTP Server Docker Image
 
+[![Docker Build](https://github.com/kaczmar2/tftp-hpa/actions/workflows/docker-build.yml/badge.svg)](https://github.com/kaczmar2/tftp-hpa/actions/workflows/docker-build.yml)
+
 A minimal, secure TFTP server based on `debian:bookworm-slim` and `tftpd-hpa`.
 
 ## Quick Start

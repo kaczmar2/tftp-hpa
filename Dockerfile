@@ -1,25 +1,21 @@
-# Use Debian Bookworm as base image
 FROM debian:bookworm-slim
 
-# Set metadata
 LABEL maintainer="kaczmar2"
 LABEL description="Minimal TFTP server based on Debian Bookworm Slim and tftpd-hpa"
 LABEL version="1.0.0"
 
-# Install tftpd-hpa package and socat for simple syslog redirection
 RUN apt-get update && \
     apt-get install -y --no-install-recommends tftpd-hpa socat && \
-    apt-get clean && \
+    apt-get -y autoremove && \
+    apt-get -y clean && \
     rm -rf /var/lib/apt/lists/*
 
-# Expose TFTP port (documentation - ignored with network_mode: host)
 EXPOSE 69/udp
 
-# Create and prepare TFTP directory
+# Set up TFTP root directory
 RUN mkdir -p /srv/tftp && \
     chown tftp:nogroup /srv/tftp && \
     chmod 755 /srv/tftp
-
 
 # Set working directory
 WORKDIR /srv/tftp
