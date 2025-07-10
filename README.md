@@ -2,6 +2,8 @@
 
 [![Docker Build](https://github.com/kaczmar2/tftp-hpa/actions/workflows/docker-build.yml/badge.svg)](https://github.com/kaczmar2/tftp-hpa/actions/workflows/docker-build.yml)
 
+Docker Hub: [https://hub.docker.com/r/kaczmar2/tftp-hpa](https://hub.docker.com/r/kaczmar2/tftp-hpa)
+
 A minimal, secure TFTP server based on `debian:bookworm-slim` and `tftpd-hpa`.
 
 ## Quick Start
@@ -10,7 +12,7 @@ A minimal, secure TFTP server based on `debian:bookworm-slim` and `tftpd-hpa`.
 
 ```bash
 # Clone or create the project directory
-mkdir tftp-server && cd tftp-server
+mkdir -p ~/docker/tftp-server && cd ~/docker/tftp-server
 
 # Download docker-compose.yml
 curl -O https://raw.githubusercontent.com/kaczmar2/tftp-hpa/main/docker-compose.yml
@@ -20,11 +22,16 @@ curl -O https://raw.githubusercontent.com/kaczmar2/tftp-hpa/main/.env.example
 cp .env.example .env
 # Edit .env to set TZ and TFTP_ROOT if needed
 
+# set up Docker bind mount
+sudo mkdir -p /srv/docker/tftp
+sudo chown -R $USER:$USER /srv/docker
+sudo chmod -R 755 /srv/docker/tftp
+
 # Pull and start
-docker-compose up -d
+docker compose up -d
 
 # Check status
-docker-compose ps
+docker compose ps
 docker logs tftp-server
 ```
 
@@ -63,8 +70,8 @@ services:
 
 ```
 /srv/docker/tftp/         # Host directory (mapped to container)
-├── file1.txt             # Files to serve via TFTP
-├── file2.bin             # Any files you want accessible
+├── file1.txt             # File to serve via TFTP
+├── file2.bin             # File to serve via TFTP
 └── subdirectory/         # Subdirectories are supported
     └── nested-file.txt
 ```
@@ -73,14 +80,23 @@ services:
 
 ### Testing TFTP Access
 
+It is useful to test your TFTP server with a TFTP client; you may simply use the [tftp-hpa](https://packages.debian.org/search?keywords=tftp-hpa) package for this purpose:
+
 ```bash
 # Install TFTP client
 sudo apt install tftp-hpa
+```
 
-# Test file download
+Test file download:
+
+```
+cd /tmp
+uname -a > /srv/docker/tftp/test
 tftp localhost
-tftp> get file1.txt
+tftp> get test
 tftp> quit
+diff test /srv/docker/tftp/test
+(nothing, they are identical)
 ```
 
 ### Viewing Logs
