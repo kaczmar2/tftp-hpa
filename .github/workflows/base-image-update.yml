@@ -13,9 +13,7 @@ on:
         default: false
         type: boolean
 
-permissions:
-  contents: write
-  actions: write
+permissions: write-all
 
 jobs:
   check-base-image:
@@ -36,7 +34,7 @@ jobs:
         CURRENT_DIGEST=$(docker pull debian:bookworm-slim 2>&1 | grep "Digest:" | sed 's/.*Digest: //' || echo "")
         
         # Get the digest from GitHub repository variable
-        LAST_DIGEST=$(gh variable get LAST_BASE_DIGEST || echo "")
+        LAST_DIGEST="${{ vars.LAST_BASE_DIGEST }}"
         
         echo "Current digest: $CURRENT_DIGEST"
         echo "Last digest: $LAST_DIGEST"
