@@ -33,3 +33,4 @@ logs/
 /tftp-root/
 test-files/
 CLAUDE.md
+last-base-image-check.txt
