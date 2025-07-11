@@ -13,6 +13,10 @@ on:
         default: 'false'
         type: boolean
 
+permissions:
+  contents: write
+  actions: read
+
 jobs:
   check-base-image:
     runs-on: ubuntu-latest
