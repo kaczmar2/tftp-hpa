@@ -31,7 +31,17 @@ jobs:
       id: check
       run: |
         # Get the digest using manifest inspect (more reliable than pull)
-        CURRENT_DIGEST=$(docker manifest inspect debian:bookworm-slim | jq -r '.config.digest')
+        echo "Debugging manifest structure:"
+        docker manifest inspect debian:bookworm-slim | jq '.'
+        
+        # Try multiple digest extraction methods
+        CURRENT_DIGEST=$(docker manifest inspect debian:bookworm-slim | jq -r '.digest // .config.digest // empty')
+        
+        # Fallback: if still empty, try docker images --digests
+        if [ "$CURRENT_DIGEST" = "" ] || [ "$CURRENT_DIGEST" = "null" ]; then
+          echo "Fallback: using docker pull to get digest"
+          CURRENT_DIGEST=$(docker pull debian:bookworm-slim 2>&1 | grep "Digest:" | sed 's/.*Digest: //' || echo "")
+        fi
         
         # Get the digest from git repository (if file exists)
         LAST_DIGEST=""
