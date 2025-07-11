@@ -2,7 +2,6 @@ FROM debian:bookworm-slim
 
 LABEL maintainer="kaczmar2"
 LABEL description="Minimal TFTP server based on Debian Bookworm Slim and tftpd-hpa"
-LABEL version="1.0.0"
 
 RUN apt-get update && \
     apt-get install -y --no-install-recommends tftpd-hpa socat && \
