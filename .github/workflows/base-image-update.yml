@@ -110,10 +110,11 @@ jobs:
         sudo apt-get update -qq
         sudo apt-get install -y -qq tftp-hpa
         
-    - name: Build Docker image
+    - name: Build Docker image (single platform for testing)
       uses: docker/build-push-action@v5
       with:
         context: .
+        platforms: linux/amd64
         push: false
         tags: kaczmar2/tftp-hpa:base-update-test
         load: true
@@ -194,6 +195,7 @@ jobs:
       uses: docker/build-push-action@v5
       with:
         context: .
+        platforms: linux/amd64,linux/arm64,linux/arm/v7
         push: true
         tags: ${{ steps.meta.outputs.tags }}
         labels: ${{ steps.meta.outputs.labels }}
