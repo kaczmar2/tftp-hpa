@@ -107,17 +107,21 @@ jobs:
         tags: kaczmar2/tftp-hpa:base-update-test
         load: true
         
+    - name: Set up TFTP test environment
+      run: |
+        # Set up Docker bind mount
+        sudo mkdir -p /srv/docker/tftp
+        sudo chown -R $USER:$USER /srv/docker
+        sudo chmod -R 755 /srv/docker/tftp
+        
     - name: Test image can start
       run: |
-        # Create test directory
-        mkdir -p /tmp/tftp-test
-        uname -a > /tmp/tftp-test/test
-        
         # Start container
         docker run -d \
           --name tftp-test \
           --network host \
-          -v /tmp/tftp-test:/srv/tftp \
+          -e TZ=America/Denver \
+          -v /srv/docker/tftp:/srv/tftp \
           kaczmar2/tftp-hpa:base-update-test
           
         # Wait for startup
@@ -131,8 +135,8 @@ jobs:
         
     - name: Test TFTP functionality
       run: |
-        # Change to temp directory for test
         cd /tmp
+        uname -a > /srv/docker/tftp/test
         
         # Test TFTP download
         echo "get test" | tftp localhost
@@ -140,14 +144,14 @@ jobs:
         # Verify file was downloaded and content matches
         if [ -f test ]; then
           echo "✅ File downloaded successfully"
-          if diff test /tmp/tftp-test/test; then
+          if diff test /srv/docker/tftp/test; then
             echo "✅ File content matches"
           else
             echo "❌ File content differs"
             echo "Downloaded file:"
             cat test
             echo "Original file:"
-            cat /tmp/tftp-test/test
+            cat /srv/docker/tftp/test
             exit 1
           fi
         else
