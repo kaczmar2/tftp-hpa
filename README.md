@@ -22,10 +22,8 @@ curl -O https://raw.githubusercontent.com/kaczmar2/tftp-hpa/main/.env.example
 cp .env.example .env
 # Edit .env to set TZ and TFTP_ROOT if needed
 
-# set up Docker bind mount
+# Create Docker bind mount directory
 sudo mkdir -p /srv/docker/tftp
-sudo chown -R $USER:$USER /srv/docker
-sudo chmod -R 755 /srv/docker/tftp
 
 # Pull and start
 docker compose up -d
@@ -91,7 +89,7 @@ Test file download:
 
 ```
 cd /tmp
-uname -a > /srv/docker/tftp/test
+uname -a | sudo tee /srv/docker/tftp/test
 tftp localhost
 tftp> get test
 tftp> quit

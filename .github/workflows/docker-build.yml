@@ -63,7 +63,7 @@ jobs:
     - name: Test TFTP functionality
       run: |
         cd /tmp
-        uname -a > /srv/docker/tftp/test
+        uname -a | sudo tee /srv/docker/tftp/test
         
         # Test TFTP download
         echo "get test" | tftp localhost

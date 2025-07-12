@@ -11,11 +11,6 @@ RUN apt-get update && \
 
 EXPOSE 69/udp
 
-# Set up TFTP root directory
-RUN mkdir -p /srv/tftp && \
-    chown tftp:nogroup /srv/tftp && \
-    chmod 755 /srv/tftp
-
 # Set working directory
 WORKDIR /srv/tftp
 
