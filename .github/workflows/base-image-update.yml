@@ -168,6 +168,10 @@ jobs:
         docker stop tftp-test || true
         docker rm tftp-test || true
         
+        # Fix permissions for upload test (tftp user needs write access)
+        sudo chown -R tftp:nogroup /srv/docker/tftp
+        sudo chmod 755 /srv/docker/tftp
+        
         # Start container with --create flag to enable uploads
         docker run -d \
           --name tftp-test \
