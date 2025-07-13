@@ -187,11 +187,11 @@ jobs:
         echo "Upload test file content" > upload-test.txt
         
         # Upload file via TFTP (from /tmp to TFTP server)
-        tftp localhost <<EOF
-binary
-put upload-test.txt
-quit
-EOF
+        tftp localhost <<'EOF'
+        binary
+        put upload-test.txt
+        quit
+        EOF
         
         # Verify file was uploaded to server
         if [ -f /srv/docker/tftp/upload-test.txt ]; then
