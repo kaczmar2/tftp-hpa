@@ -85,6 +85,51 @@ jobs:
           echo "❌ File was not downloaded"
           exit 1
         fi
+
+    - name: Test TFTP custom options (PUT functionality)
+      run: |
+        # Stop existing container
+        docker stop tftp-test || true
+        docker rm tftp-test || true
+        
+        # Start container with --create flag to enable uploads
+        docker run -d \
+          --name tftp-test \
+          --network host \
+          -v /srv/docker/tftp:/srv/tftp \
+          -e TFTP_ARGS="--foreground --secure --create --verbosity 4 --user tftp" \
+          kaczmar2/tftp-hpa:test
+        
+        # Wait for container to be ready
+        sleep 3
+        
+        # Test TFTP upload (PUT)
+        cd /tmp
+        echo "Upload test file content" > upload-test.txt
+        
+        # Upload file via TFTP
+        echo -e "binary\nput upload-test.txt" | tftp localhost
+        
+        # Verify file was uploaded to server
+        if [ -f /srv/docker/tftp/upload-test.txt ]; then
+          echo "✅ File uploaded successfully"
+          if grep -q "Upload test file content" /srv/docker/tftp/upload-test.txt; then
+            echo "✅ Uploaded file content is correct"
+          else
+            echo "❌ Uploaded file content is incorrect"
+            echo "Expected: Upload test file content"
+            echo "Actual:"
+            cat /srv/docker/tftp/upload-test.txt
+            exit 1
+          fi
+        else
+          echo "❌ File was not uploaded"
+          ls -la /srv/docker/tftp/
+          exit 1
+        fi
+        
+        # Clean up uploaded test file
+        sudo rm -f /srv/docker/tftp/upload-test.txt
         
         # Check TFTP logs for request
         docker logs tftp-test | grep "RRQ from"
