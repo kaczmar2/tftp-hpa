@@ -138,8 +138,8 @@ jobs:
         # Clean up uploaded test file
         sudo rm -f /srv/docker/tftp/upload-test.txt
         
-        # Check TFTP logs for request
-        docker logs tftp-test | grep "RRQ from"
+        # Check TFTP logs for write request
+        docker logs tftp-test | grep "WRQ from"
         
     - name: Cleanup
       if: always()
