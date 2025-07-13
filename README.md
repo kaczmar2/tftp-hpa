@@ -146,20 +146,11 @@ Ensure UDP port 69 is accessible.
 
 The container supports customizing TFTP daemon behavior via the `TFTP_ARGS` environment variable. You can pass any valid `in.tftpd` options while keeping the current defaults as the base.
 
-### Docker Run Examples
+### Docker Run Example
 
 ```bash
 # Enable file creation (write access)
 docker run -e TFTP_ARGS="--foreground --secure --create --user tftp" kaczmar2/tftp-hpa
-
-# IPv4 only with custom block size  
-docker run -e TFTP_ARGS="--foreground --secure --ipv4 --blocksize 1024 --user tftp" kaczmar2/tftp-hpa
-
-# Port range restriction with higher verbosity
-docker run -e TFTP_ARGS="--foreground --secure --port-range 10000:20000 --verbosity 5 --user tftp" kaczmar2/tftp-hpa
-
-# Custom timeout and umask for new files
-docker run -e TFTP_ARGS="--foreground --secure --create --timeout 300 --umask 022 --user tftp" kaczmar2/tftp-hpa
 ```
 
 ### Docker Compose Examples
@@ -186,3 +177,9 @@ When customizing `TFTP_ARGS`, note these restrictions:
 - **Conflicting options**: Don't use `--listen` as it conflicts with `--foreground` (required for containers)
 - **Security**: Avoid changing `--user` from `tftp` as this breaks the container's security model
 - **Directory**: The TFTP root directory is fixed to `/srv/tftp` and cannot be changed via arguments
+
+### File Permissions for Uploads
+
+**Note**: Setting up host directory permissions for TFTP uploads is beyond the scope of this README, as requirements vary by environment. 
+
+For general guidance when using `--create`: the container process needs write access to the mounted directory. This typically involves setting appropriate permissions on the host directory before starting the container.
