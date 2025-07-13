@@ -161,6 +161,61 @@ jobs:
         
         # Check TFTP logs for request
         docker logs tftp-test | grep "RRQ from"
+
+    - name: Test TFTP custom options (PUT functionality)
+      run: |
+        # Stop existing container
+        docker stop tftp-test || true
+        docker rm tftp-test || true
+        
+        # Fix permissions for upload test (allow container tftp user to write)
+        sudo chmod 777 /srv/docker/tftp
+        
+        # Start container with --create flag to enable uploads
+        docker run -d \
+          --name tftp-test \
+          --network host \
+          -v /srv/docker/tftp:/srv/tftp \
+          -e TFTP_ARGS="--foreground --secure --create --verbosity 4 --user tftp" \
+          kaczmar2/tftp-hpa:latest
+        
+        # Wait for container to be ready
+        sleep 3
+        
+        # Test TFTP upload (PUT)
+        cd /tmp
+        echo "Upload test file content" > upload-test.txt
+        
+        # Upload file via TFTP (from /tmp to TFTP server)
+        tftp localhost <<'EOF'
+        binary
+        put upload-test.txt
+        quit
+        EOF
+        
+        # Verify file was uploaded to server
+        if [ -f /srv/docker/tftp/upload-test.txt ]; then
+          echo "✅ File uploaded successfully"
+          if grep -q "Upload test file content" /srv/docker/tftp/upload-test.txt; then
+            echo "✅ Uploaded file content is correct"
+          else
+            echo "❌ Uploaded file content is incorrect"
+            echo "Expected: Upload test file content"
+            echo "Actual:"
+            cat /srv/docker/tftp/upload-test.txt
+            exit 1
+          fi
+        else
+          echo "❌ File was not uploaded"
+          ls -la /srv/docker/tftp/
+          exit 1
+        fi
+        
+        # Clean up uploaded test file
+        sudo rm -f /srv/docker/tftp/upload-test.txt
+        
+        # Check TFTP logs for write request
+        docker logs tftp-test | grep "WRQ from"
         
     - name: Cleanup test container
       if: always()
