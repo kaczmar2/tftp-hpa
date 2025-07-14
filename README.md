@@ -40,7 +40,7 @@ docker run -d \
   --name tftp-server \
   --network host \
   --restart unless-stopped \
-  -e TZ=America/New_York \
+  -e TZ=America/Denver \
   -v /srv/docker/tftp:/srv/tftp \
   -v /etc/localtime:/etc/localtime:ro \
   kaczmar2/tftp-hpa
@@ -149,8 +149,8 @@ The container supports customizing TFTP daemon behavior via the `TFTP_ARGS` envi
 ### Docker Run Example
 
 ```bash
-# Enable file creation (write access)
-docker run -e TFTP_ARGS="--foreground --secure --create --user tftp" kaczmar2/tftp-hpa
+# Start container with --create flag to enable uploads
+docker run -e TFTP_ARGS="--foreground --secure --create --verbosity 4 --user tftp" kaczmar2/tftp-hpa
 ```
 
 ### Docker Compose Examples
@@ -159,10 +159,7 @@ Add to your `.env` file:
 
 ```bash
 # Enable write access with custom settings
-TFTP_ARGS="--foreground --secure --create --timeout 300 --umask 022 --user tftp"
-
-# Read-only with IPv6 and custom verbosity
-TFTP_ARGS="--foreground --secure --ipv6 --verbosity 2 --user tftp"
+TFTP_ARGS="-foreground --secure --create --verbosity 4 --user tftp"
 ```
 
 ### Available Options
