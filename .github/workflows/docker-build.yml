@@ -62,10 +62,9 @@ jobs:
         
     - name: Test TFTP functionality
       run: |
+        # Test TFTP download
         cd /tmp
         uname -a | sudo tee /srv/docker/tftp/test
-        
-        # Test TFTP download
         echo "get test" | tftp localhost
         
         # Verify file was downloaded and content matches
@@ -85,60 +84,59 @@ jobs:
           echo "❌ File was not downloaded"
           exit 1
         fi
-
-    - name: Test TFTP custom options (PUT functionality)
+        
+        # Check TFTP logs for request
+        docker logs tftp-test | grep "RRQ from"
+        
+    - name: Test TFTP upload functionality
       run: |
         # Stop existing container
         docker stop tftp-test || true
         docker rm tftp-test || true
         
-        # Fix permissions for upload test (allow container tftp user to write)
-        sudo chmod 777 /srv/docker/tftp
+        # Set permissions for upload testing
+        sudo chmod -R 777 /srv/docker/tftp
         
-        # Start container with --create flag to enable uploads
+        # Start container with upload capability (--create flag)
         docker run -d \
           --name tftp-test \
           --network host \
-          -v /srv/docker/tftp:/srv/tftp \
+          -e TZ=America/Denver \
           -e TFTP_ARGS="--foreground --secure --create --verbosity 4 --user tftp" \
+          -v /srv/docker/tftp:/srv/tftp \
           kaczmar2/tftp-hpa:test
-        
-        # Wait for container to be ready
+          
+        # Wait for startup
         sleep 3
         
-        # Test TFTP upload (PUT)
+        # Test file upload
         cd /tmp
-        echo "Upload test file content" > upload-test.txt
-        
-        # Upload file via TFTP (from /tmp to TFTP server)
+        echo "upload test content" > upload-test.txt
         tftp localhost <<'EOF'
         binary
         put upload-test.txt
         quit
         EOF
         
-        # Verify file was uploaded to server
+        # Verify uploaded file exists and has correct content
         if [ -f /srv/docker/tftp/upload-test.txt ]; then
           echo "✅ File uploaded successfully"
-          if grep -q "Upload test file content" /srv/docker/tftp/upload-test.txt; then
-            echo "✅ Uploaded file content is correct"
+          if diff upload-test.txt /srv/docker/tftp/upload-test.txt; then
+            echo "✅ Uploaded file content matches"
           else
-            echo "❌ Uploaded file content is incorrect"
-            echo "Expected: Upload test file content"
-            echo "Actual:"
+            echo "❌ Uploaded file content differs"
+            echo "Original file:"
+            cat upload-test.txt
+            echo "Uploaded file:"
             cat /srv/docker/tftp/upload-test.txt
             exit 1
           fi
         else
           echo "❌ File was not uploaded"
-          ls -la /srv/docker/tftp/
           exit 1
         fi
         
-        # Clean up uploaded test file
-        sudo rm -f /srv/docker/tftp/upload-test.txt
-        
-        # Check TFTP logs for write request
+        # Check TFTP logs for upload request
         docker logs tftp-test | grep "WRQ from"
         
     - name: Cleanup
@@ -146,7 +144,7 @@ jobs:
       run: |
         docker stop tftp-test || true
         docker rm tftp-test || true
-        rm -f /tmp/test
+        rm -f /tmp/test /tmp/upload-test.txt
 
     - name: Login to Docker Hub
       if: startsWith(github.ref, 'refs/tags/v')
