@@ -1,26 +1,6 @@
-# ⚠️ ARCHIVED - Project Moved
-
-This repository has been **archived** and is no longer maintained.
-
-## New Location
-**This project has moved to: [`tftp-server`](https://github.com/kaczmar2/tftp-server)**
-
-## What's New
-The new repository provides:
-- **Two Docker images**: TFTP-only and TFTP+web variants
-- **Better architecture**: Clean directory structure with `server/` and `server-web/`
-- **Improved naming**: `kaczmar2/tftp-server` and `kaczmar2/tftp-server-web`
-- **Enhanced functionality**: Optional nginx web server for serving boot scripts
-
-Links
-
-- New Repository: https://github.com/kaczmar2/tftp-server
-- Docker Hub:
-  - https://hub.docker.com/r/kaczmar2/tftp-server
-  - https://hub.docker.com/r/kaczmar2/tftp-server-web
-
+> ℹ **Archived:** This project is no longer maintained.  
+> The updated repo is available here: [kaczmar2/tftp-hpa-server](https://github.com/kaczmar2/tftp-hpa-server)
 ---
-This repository was archived on 16 Aug 2025 in favor of the improved multi-image architecture.
 
 # TFTP Server Docker Image
 
